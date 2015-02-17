@@ -38,7 +38,9 @@ public class MainMenuHUD extends IHUD implements OnClickListener {
 	//CONTROLLER
 	private MainMenuController	mainMenuController;
 	
-	public MainMenuHUD() {	
+	public MainMenuHUD(Scene scene) {
+		super(scene);
+		
 		ResourceManager.getInstance().loadMainMenuHUDResources();
 		
 		initViews					();
@@ -57,6 +59,8 @@ public class MainMenuHUD extends IHUD implements OnClickListener {
 		
 		titleTxt.setVisible(false);
 		startGameBtn.setVisible(false);
+		
+		scene.registerTouchArea(startGameBtn);
 	}
 	
 	private void initViewsPositionsAndBounds() {
@@ -107,6 +111,8 @@ public class MainMenuHUD extends IHUD implements OnClickListener {
 	@Override
 	public void destroy() {
 		ResourceManager.getInstance().unloadMainMenuHUDResources();
+		
+		scene.unregisterTouchArea(startGameBtn);
 	}		
 
 	@Override
@@ -116,9 +122,4 @@ public class MainMenuHUD extends IHUD implements OnClickListener {
 		}
 	}
 	
-	@Override
-	public void registerTouchArea(Scene scene) {
-		scene.registerTouchArea(startGameBtn);
-	}
-
 }

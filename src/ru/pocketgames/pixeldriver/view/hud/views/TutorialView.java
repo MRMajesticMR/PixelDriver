@@ -2,9 +2,12 @@ package ru.pocketgames.pixeldriver.view.hud.views;
 
 import org.andengine.entity.IEntity;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.modifier.IModifier;
 
 import ru.pocketgames.pixeldriver.andengine.DefaultCamera;
+import ru.pocketgames.pixeldriver.controllers.hud.TutorialMenuController;
+import ru.pocketgames.pixeldriver.debug.logger.DebugLogger;
 import ru.pocketgames.pixeldriver.view.hud.modifiers.HideLeftSideTutorialMenuModifier;
 import ru.pocketgames.pixeldriver.view.hud.modifiers.HideRightSideTutorialMenuModifier;
 import ru.pocketgames.pixeldriver.view.hud.modifiers.ShowLeftSideTutorialMenuModifier;
@@ -13,8 +16,9 @@ import ru.pocketgames.pixeldriver.view.modifiers.IHideSequenceEntityModifier;
 import ru.pocketgames.pixeldriver.view.modifiers.IShowSequenceEntityModifier;
 import ru.pocketgames.pixeldriver.view.resources.ResourceManager;
 
-public class TutorialView extends Sprite implements IModifier.IModifierListener<IEntity> {
+public class TutorialView extends Sprite {
 
+	private static final String LOG_TAG = TutorialView.class.getSimpleName();
 	
 	//VIEWS
 	private TutorialControlNote[] 		tutorialControlNotes = new TutorialControlNote[2];
@@ -27,7 +31,7 @@ public class TutorialView extends Sprite implements IModifier.IModifierListener<
 	private IHideSequenceEntityModifier hideRightSideModifier;
 	
 	//VARIABLES
-	private boolean isVisible;
+	private TutorialMenuController	tutorialMenuController;
 	
 	
 	public TutorialView() {
@@ -49,13 +53,17 @@ public class TutorialView extends Sprite implements IModifier.IModifierListener<
 		
 		hideLeftSideModifier 	= new HideLeftSideTutorialMenuModifier		();
 		hideRightSideModifier	= new HideRightSideTutorialMenuModifier		();
-		
-		hideLeftSideModifier.addModifierListener(this);
 	}
 	
+	public void setModifierListener(IModifier.IModifierListener<IEntity> listener) {
+		hideLeftSideModifier.addModifierListener(listener);
+	}
+	
+	public void setTutorialMenuController(TutorialMenuController tutorialMenuController) {
+		this.tutorialMenuController = tutorialMenuController;
+	}
+
 	public void show() {
-		isVisible = true;
-		
 		showLeftSideModifier.reset						();
 		showRightSideModifier.reset						();
 		
@@ -71,17 +79,17 @@ public class TutorialView extends Sprite implements IModifier.IModifierListener<
 		tutorialControlNotes[1].registerEntityModifier	(hideRightSideModifier);
 	}
 	
-	public boolean isTutorialVisible() {
-		return isVisible;
-	}
-
 	@Override
-	public void onModifierStarted(IModifier<IEntity> pModifier, IEntity pItem) {		
-	}
-
-	@Override
-	public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {
-		isVisible = false;
+	public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+		switch (pSceneTouchEvent.getAction()) {
+		case TouchEvent.ACTION_UP:					
+		case TouchEvent.ACTION_OUTSIDE:
+			DebugLogger.logDebugI(LOG_TAG, "Tutorial screen clicked");
+			
+			tutorialMenuController.onTutorialScreenClicked();
+			break;
+		}
+		return true;
 	}
 	
 }

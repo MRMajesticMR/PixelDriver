@@ -11,6 +11,7 @@ import ru.pocketgames.pixeldriver.andengine.DefaultScene;
 import ru.pocketgames.pixeldriver.controllers.hud.GameMenuController;
 import ru.pocketgames.pixeldriver.controllers.hud.IHUDController;
 import ru.pocketgames.pixeldriver.controllers.hud.MainMenuController;
+import ru.pocketgames.pixeldriver.controllers.hud.TutorialMenuController;
 import ru.pocketgames.pixeldriver.view.background.DefaultBackground;
 import ru.pocketgames.pixeldriver.view.hud.HUDManager;
 import ru.pocketgames.pixeldriver.view.hud.HUDManager.HudType;
@@ -62,11 +63,17 @@ public class GameActivity extends BaseGameActivity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-			if (hudManager.getHudType() == HudType.GAME_MENU) {
+			switch(hudManager.getSelectedHudType()) {
+			case TUTORIAL_MENU:
 				hudManager.changeHUD(HudType.MAIN_MENU, mainMenuHUDController);
 				gameField.changeState(State.MAIN_MENU);
 				return true;
-			}
+				
+			case GAME_MENU:
+				hudManager.changeHUD(HudType.MAIN_MENU, mainMenuHUDController);
+				gameField.changeState(State.MAIN_MENU);
+				return true;
+			}			
 		}
 		return super.onKeyDown(keyCode, event);
 	}
@@ -82,8 +89,17 @@ public class GameActivity extends BaseGameActivity {
 
 		@Override
 		public void onStartGameBtnClicked() {
-			hudManager.changeHUD(HudType.GAME_MENU, gameMenuHUDController);
+			hudManager.changeHUD(HudType.TUTORIAL_MENU, tutorialMenuController);
 			gameField.changeState(State.TUTORIAL_MENU);
+		}
+	};
+		
+	private TutorialMenuController tutorialMenuController = new TutorialMenuController() {
+		
+		@Override
+		public void onTutorialScreenClicked() {
+			hudManager.changeHUD(HudType.GAME_MENU, gameMenuHUDController);
+			gameField.changeState(State.GAME);
 		}
 	};
 	
@@ -91,10 +107,10 @@ public class GameActivity extends BaseGameActivity {
 
 		@Override
 		public void onMenuClosed() {
-			hudManager.changeHUD(HudType.GAME_MENU, gameMenuHUDController);
-			gameField.changeState(State.GAME);
+			
 		}
 		
 	};	
+
 
 }

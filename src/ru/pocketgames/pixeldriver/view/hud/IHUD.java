@@ -18,16 +18,22 @@ public abstract class IHUD extends Entity implements IModifier.IModifierListener
 	
 	protected OnHUDHideListener onHUDHideListener;
 	
+	protected Scene scene;
+	
+	public IHUD(Scene scene) {
+		this.scene = scene;
+	}
+	
 	public void setOnHUDHideListener(OnHUDHideListener onHUDHideListener) {
 		this.onHUDHideListener = onHUDHideListener;
 	}
 	
-	public abstract void show				();
-	public abstract void hide				();
-	public abstract void destroy			();
+	public abstract void 		show					();
+	public abstract void 		hide					();
+	public abstract void 		destroy					();
 	
-	public abstract void registerTouchArea	(Scene scene);
-	public abstract void setHUDController	(IHUDController hudController);
+//	public abstract void 		registerTouchArea		(Scene scene);
+	public abstract void 		setHUDController		(IHUDController hudController);
 	
 	@Override
 	public void onModifierFinished(IModifier<IEntity> pModifier, IEntity pItem) {		
