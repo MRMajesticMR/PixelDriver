@@ -1,99 +1,142 @@
 package ru.pocketgames.pixeldriver.view.objects.player;
 
+import org.andengine.engine.Engine;
 import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 
-import ru.pocketgames.pixeldriver.view.objects.IAndEngineObject;
-import ru.pocketgames.pixeldriver.view.objects.IMoveableGameObject;
-import ru.pocketgames.pixeldriver.view.resources.ResourceManager;
+import ru.pocketgames.pixeldriver.view.resources.impl.ResourceManager;
 
-public class PlayerCar extends IMoveableGameObject implements IAndEngineObject {
-	
-	public static final float 	CAR_WIDTH 	= 70;
-	private static final float 	CAR_HEIGHT 	= 120;
-	
-	private static final float CAR_SPEED 					= 3.0f;
-	private static final float MAX_ROTATION_VELOCITY 		= 3.0f;
-	private static final float ROTATION_ACCELERATION 		= 0.1f;
-	
-	private Sprite playerCarView;
+public class PlayerCar implements IControlableObject {
 
-	public PlayerCar() {
-		playerCarView = new Sprite(0, 0, 
-				ResourceManager.getInstance().getPlayerCarRecources().getRedPlayerCarTextureRegion(), 
-				ResourceManager.getInstance().getEngine().getVertexBufferObjectManager());
+	private Sprite view;
+	
+	private float x;
+	private float y;
+	private float width;
+	private float length;
+	
+	private float currentSpeed;	
+	private float accelerationSpeed;
+	private float breakSpeed;
+	
+	private float maxSpeed;
+	private float minSpeed;
+	
+	private boolean isBreak;
+	
+	private TurnState turnState;
+	private float currentTurnSpeed;
+	private float turnAcceleration;
+	
+	private float maxTurnSpeed;
+	
+	public PlayerCar(Engine engine) {
+		this.x 		= 0;
+		this.y 		= 600;
+		this.width 	= 60;
+		this.length = 120;
 		
-		setX					(0);
-		setY					(0);
-		setWidth				(CAR_WIDTH);
-		setHeight				(CAR_HEIGHT);
-		setSpeed				(CAR_SPEED);		
-		setRotationAcceleration	(ROTATION_ACCELERATION);
-		setMaxRotationVelocity	(MAX_ROTATION_VELOCITY);
+		view = new Sprite(x, y, ResourceManager.getInstance().getPlayerCarRecources().getPlayerCarTextureRegion(), engine.getVertexBufferObjectManager());
+		view.setWidth	(width);
+		view.setHeight	(length);
 		
-		playerCarView.setRotationCenter(getWidth() / 2, getHeight() / 2);
-	}
-
-	@Override
-	public void move() {
-		recalculateRotationVelocity();		
-		rotateView();
-		updateViewPosition();
+		maxSpeed = 5.0f;
+		minSpeed = 1.0f;
+		
+		currentSpeed 			= minSpeed;
+		accelerationSpeed 		= 0.1f;
+		breakSpeed 				= 0.4f;
+		
+		isBreak = false;
+		
+		turnState = TurnState.RELEASED;
+		
+		currentTurnSpeed 	= 0.0f;
+		turnAcceleration 	= 0.3f;
+		maxTurnSpeed		= 5.0f;
 	}		
-
-	@Override
-	public void setX(float x) {
-		playerCarView.setX(x);
-	}
-
-	@Override
-	public float getX() {
-		return playerCarView.getX();
-	}
-
-	@Override
-	public void setY(float y) {
-		playerCarView.setY(y);
-	}
-
-	@Override
-	public float getY() {
-		return playerCarView.getY();
-	}
-
-	@Override
-	public void setWidth(float width) {
-		playerCarView.setWidth(width);
-	}
-
-	@Override
-	public float getWidth() {
-		return playerCarView.getWidth();
-	}
-
-	@Override
-	public void setHeight(float height) {
-		playerCarView.setHeight(height);
-	}
-
-	@Override
-	public float getHeight() {
-		return playerCarView.getHeight();
+	
+	public Entity getView() {
+		return view;
 	}
 	
-	//ANDENGINE OBJECT
+	public void update() {
+		if(isBreak) {			
+			this.currentSpeed -= breakSpeed;
+			
+			if(currentSpeed < minSpeed)
+				currentSpeed = minSpeed;			
+		} else {		
+			this.currentSpeed += accelerationSpeed;
+			
+			if(currentSpeed > maxSpeed)			
+				this.currentSpeed = maxSpeed;
+		}
+		
+		if(turnState == TurnState.LEFT) {
+			currentTurnSpeed -= turnAcceleration;
+			if(currentTurnSpeed < -maxTurnSpeed)
+				currentTurnSpeed = -maxTurnSpeed;
+		}
+		
+		if(turnState == TurnState.RIGHT) {
+			currentTurnSpeed += turnAcceleration;
+			if(currentTurnSpeed > maxTurnSpeed)
+				currentTurnSpeed = maxTurnSpeed;
+		}
+		
+		if(turnState == TurnState.RELEASED) {
+			if(currentTurnSpeed < 0) {
+				currentTurnSpeed += turnAcceleration;
+				if(currentTurnSpeed > 0)
+					currentTurnSpeed = 0;
+			}
+			
+			if(currentTurnSpeed > 0) {
+				currentTurnSpeed -= turnAcceleration;
+				if(currentTurnSpeed < 0)
+					currentTurnSpeed = 0;
+			}
+		}
+				
+		
+		y -= currentSpeed;
+		x += currentTurnSpeed;
+		
+//		view.setY(y);
+		view.setX(x);
+		
+		view.setRotation(translateTurnSpeedToRotation(currentTurnSpeed));
+	}			
+	
+	private float translateTurnSpeedToRotation(float turnSpeed) {
+		return turnSpeed;
+	}
+	
 	@Override
-	public void addToScene(Entity entity) {
-		entity.attachChild(playerCarView);
+	public void setBreak() {		
+		isBreak = true;
 	}
 	
-	//PRIVATE METHODS
-	private void rotateView() {
-		playerCarView.setRotation(getRotationVelocity() * 3.0f);
+	@Override
+	public void releaseBreak() {
+		isBreak = false;
 	}
-	
-	private void updateViewPosition() {
-		setX(getX() + getRotationVelocity());
-	}	
 
+	@Override
+	public void setTurnLeft() {
+		turnState = TurnState.LEFT;
+	}
+
+	@Override
+	public void setTurnRight() {
+		turnState = TurnState.RIGHT;		
+	}
+
+	@Override
+	public void releaseTurn() {
+		turnState = TurnState.RELEASED;
+		
+	}
+	
 }

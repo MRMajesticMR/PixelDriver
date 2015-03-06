@@ -2,6 +2,7 @@ package ru.pocketgames.pixeldriver.view.resources;
 
 public interface IResources {
 
-	public void destroy();
+	public void load	();
+	public void unload	();
 	
 }

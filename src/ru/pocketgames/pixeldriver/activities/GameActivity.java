@@ -1,6 +1,7 @@
 package ru.pocketgames.pixeldriver.activities;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.entity.scene.Scene;
 import org.andengine.ui.activity.BaseGameActivity;
@@ -8,26 +9,18 @@ import org.andengine.ui.activity.BaseGameActivity;
 import ru.pocketgames.pixeldriver.andengine.DefaultCamera;
 import ru.pocketgames.pixeldriver.andengine.DefaultOptions;
 import ru.pocketgames.pixeldriver.andengine.DefaultScene;
-import ru.pocketgames.pixeldriver.controllers.hud.GameMenuController;
-import ru.pocketgames.pixeldriver.controllers.hud.IHUDController;
-import ru.pocketgames.pixeldriver.controllers.hud.MainMenuController;
-import ru.pocketgames.pixeldriver.controllers.hud.TutorialMenuController;
-import ru.pocketgames.pixeldriver.view.background.DefaultBackground;
-import ru.pocketgames.pixeldriver.view.hud.HUDManager;
-import ru.pocketgames.pixeldriver.view.hud.HUDManager.HudType;
-import ru.pocketgames.pixeldriver.view.objects.GameField;
-import ru.pocketgames.pixeldriver.view.objects.GameField.State;
-import ru.pocketgames.pixeldriver.view.resources.ResourceManager;
+import ru.pocketgames.pixeldriver.controls.DebugPlayerCarController;
+import ru.pocketgames.pixeldriver.view.objects.player.PlayerCar;
+import ru.pocketgames.pixeldriver.view.resources.impl.ResourceManager;
 import android.view.KeyEvent;
 
-public class GameActivity extends BaseGameActivity {
+public class GameActivity extends BaseGameActivity implements IUpdateHandler  {
 	
 	private Camera camera = new DefaultCamera();		
 	
-	//VIEWS
-	private HUDManager 			hudManager;
-	private GameField			gameField;
-	private DefaultBackground	background;
+	private PlayerCar playerCar;
+	
+	private DebugPlayerCarController debugPlayerCarController;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -36,81 +29,54 @@ public class GameActivity extends BaseGameActivity {
 
 	@Override
 	public void onCreateResources(OnCreateResourcesCallback pOnCreateResourcesCallback) throws Exception {
-		ResourceManager.getInstance().init(this, getEngine());		
+		ResourceManager.getInstance().init(this, getEngine());
+		ResourceManager.getInstance().loadResources();
+		
+		playerCar = new PlayerCar(getEngine());
+		
+		debugPlayerCarController = new DebugPlayerCarController(0, 0, DefaultCamera.CAMERA_WIDTH, DefaultCamera.CAMERA_HEIGHT, getEngine().getVertexBufferObjectManager());
+		debugPlayerCarController.setControlableObject(playerCar);
 		
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
 	}
 
 	@Override
-	public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws Exception {					
-		pOnCreateSceneCallback.onCreateSceneFinished(new DefaultScene());
+	public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws Exception {
+		final Scene scene = new DefaultScene();
+		scene.registerUpdateHandler(this);
+		
+		pOnCreateSceneCallback.onCreateSceneFinished(scene);
 	}
 
 	@Override
-	public void onPopulateScene(Scene pScene, OnPopulateSceneCallback pOnPopulateSceneCallback) throws Exception {
-		background	= new DefaultBackground();
-		gameField	= new GameField();
-		hudManager 	= new HUDManager(pScene);					
+	public void onPopulateScene(Scene pScene, OnPopulateSceneCallback pOnPopulateSceneCallback) throws Exception {		
 		
-		pScene.attachChild(background);
-		pScene.attachChild(gameField);
-		hudManager.changeHUD(HudType.MAIN_MENU, mainMenuHUDController);
-		gameField.changeState(State.MAIN_MENU);
+		pScene.attachChild(playerCar.getView());	
+		
+		pScene.registerTouchArea(debugPlayerCarController);
+		pScene.attachChild(debugPlayerCarController);
 		
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-			switch(hudManager.getSelectedHudType()) {
-			case TUTORIAL_MENU:
-				hudManager.changeHUD(HudType.MAIN_MENU, mainMenuHUDController);
-				gameField.changeState(State.MAIN_MENU);
-				return true;
-				
-			case GAME_MENU:
-				hudManager.changeHUD(HudType.MAIN_MENU, mainMenuHUDController);
-				gameField.changeState(State.MAIN_MENU);
-				return true;
-			}			
-		}
 		return super.onKeyDown(keyCode, event);
 	}
 	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		ResourceManager.getInstance().unloadAllResources();
+		ResourceManager.getInstance().unloadResources();
 	}
-	
-	// CONTROLLERS
-	private IHUDController mainMenuHUDController = new MainMenuController() {
 
-		@Override
-		public void onStartGameBtnClicked() {
-			hudManager.changeHUD(HudType.TUTORIAL_MENU, tutorialMenuController);
-			gameField.changeState(State.TUTORIAL_MENU);
-		}
-	};
-		
-	private TutorialMenuController tutorialMenuController = new TutorialMenuController() {
-		
-		@Override
-		public void onTutorialScreenClicked() {
-			hudManager.changeHUD(HudType.GAME_MENU, gameMenuHUDController);
-			gameField.changeState(State.GAME);
-		}
-	};
-	
-	private GameMenuController gameMenuHUDController = new GameMenuController() {
+	@Override
+	public void onUpdate(float pSecondsElapsed) {
+		playerCar.update();		
+	}
 
-		@Override
-		public void onMenuClosed() {
-			
-		}
-		
-	};	
-
-
+	@Override
+	public void reset() {
+		//.
+	}
 }

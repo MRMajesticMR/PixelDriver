@@ -11,7 +11,7 @@ public class DefaultScene extends Scene {
       
       //DEBUG CODE
       setBackgroundEnabled(true);
-      setBackground(new Background(0f, 1f, 0f));
+      setBackground(new Background(0f, 0f, 0f));
    }
 
 }
